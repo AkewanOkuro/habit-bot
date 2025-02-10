@@ -1,10 +1,10 @@
+from database import User, Habit, Stats, Session
 from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.utils import executor
 import config
-from database import Session, User, Habit, Stats
 import messages as msg
 import keyboards as kb
 from scheduler import scheduler, schedule_habit
