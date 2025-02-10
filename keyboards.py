@@ -1,5 +1,6 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 from messages import TEXTS
+import config
 
 def main_menu():
     return ReplyKeyboardMarkup(resize_keyboard=True).add(
@@ -35,3 +36,9 @@ def reminder_actions(habit_id):
         InlineKeyboardButton("💡 Мотивация", callback_data=f"motivate_{habit_id}"),
         InlineKeyboardButton("❌ Не выполнил", callback_data=f"missed_{habit_id}")
     )
+
+def timezone_keyboard():
+    keyboard = InlineKeyboardMarkup(row_width=2)
+    for tz_name in config.TIMEZONES:
+        keyboard.add(InlineKeyboardButton(tz_name, callback_data=f"tz_{tz_name}"))
+    return keyboard
