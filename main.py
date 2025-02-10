@@ -145,7 +145,21 @@ async def process_motivation(message: types.Message, state: FSMContext):
     session = Session()
     try:
         async with state.proxy() as data:
-            # Сохранение в БД
+            # Определяем тип и данные мотивации
+            if message.content_type == 'text':
+                motivation_type = 'text'
+                motivation_data = message.text
+            elif message.voice:
+                motivation_type = 'voice'
+                motivation_data = message.voice.file_id
+            elif message.video_note:  # Исправлено здесь!
+                motivation_type = 'video_note'
+                motivation_data = message.video_note.file_id
+            else:
+                await message.answer("❌ Можно отправить только текст/голос/видео-кружок")
+                return
+
+            # Сохранение привычки
             user = session.query(User).filter(User.chat_id == message.chat.id).first()
             habit = Habit(
                 user_id=user.id,
@@ -154,19 +168,17 @@ async def process_motivation(message: types.Message, state: FSMContext):
                 days=data.get('days', []),
                 interval=data.get('interval', 1),
                 time=data['time'],
-                motivation_type=message.content_type,
-                motivation_data=message.text if message.content_type == 'text' else 
-                               message.voice.file_id if message.voice else 
-                               message.video.file_id
+                motivation_type=motivation_type,
+                motivation_data=motivation_data
             )
             session.add(habit)
             session.commit()
             
-            # Планирование напоминаний
             await schedule_habit(habit, bot)
             
-        await message.answer(msg.TEXTS['habit_created'], 
-                           reply_markup=kb.main_menu())
+        await message.answer(msg.TEXTS['habit_created'], reply_markup=kb.main_menu())
+    except Exception as e:
+        await message.answer(f"❌ Ошибка: {str(e)}")
     finally:
         session.close()
         await state.finish()
