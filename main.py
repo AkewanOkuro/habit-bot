@@ -155,6 +155,9 @@ async def process_motivation(message: types.Message, state: FSMContext):
             elif message.video_note:  # Исправлено здесь!
                 motivation_type = 'video_note'
                 motivation_data = message.video_note.file_id
+            elif message.video:
+                motivation_type = 'video'
+                motivation_data = message.video.file_id
             else:
                 await message.answer("❌ Можно отправить только текст/голос/видео-кружок")
                 return
