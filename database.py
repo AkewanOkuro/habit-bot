@@ -6,7 +6,7 @@ import config
 
 Base = declarative_base()
 
-class User(Base):
+class User(Base):  # Проверьте написание: User, а не Users или user
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True)
     chat_id = Column(Integer)
