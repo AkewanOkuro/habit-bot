@@ -39,13 +39,43 @@ async def cmd_start(message: types.Message):
         if not user:
             await message.answer(msg.TEXTS['start'])
             await Form.timezone.set()
-            await message.answer(msg.TEXTS['ask_timezone'], 
-                                reply_markup=kb.timezone_keyboard())
+            await message.answer(
+                msg.TEXTS['ask_timezone'],
+                reply_markup=kb.timezone_keyboard()
+            )
         else:
-            await message.answer(msg.TEXTS['main_menu'], 
-                               reply_markup=kb.main_menu())
+            await state.finish()  # Сбрасываем состояние
+            await message.answer(
+                msg.TEXTS['main_menu'],
+                reply_markup=kb.main_menu()
+            )
     finally:
         session.close()
+
+# Обработчик выбора часового пояса
+@dp.callback_query_handler(lambda c: c.data.startswith('tz_'), state=Form.timezone)
+async def process_timezone(callback: types.CallbackQuery, state: FSMContext):
+    tz_name = callback.data.split('_', 1)[1]
+    session = Session()
+    try:
+        user = User(
+            chat_id=callback.message.chat.id,
+            timezone=config.TIMEZONES[tz_name]
+        )
+        session.add(user)
+        session.commit()
+        
+        await callback.message.answer("✅ Часовой пояс сохранен!")
+        await state.finish()
+        await callback.message.answer(
+            msg.TEXTS['main_menu'],
+            reply_markup=kb.main_menu()
+        )
+    except Exception as e:
+        await callback.answer("❌ Ошибка, попробуйте снова")
+    finally:
+        session.close()
+    await callback.answer()
 
 # ----------------- СОЗДАНИЕ ПРИВЫЧКИ -----------------
 @dp.message_handler(text="Создать привычку")
