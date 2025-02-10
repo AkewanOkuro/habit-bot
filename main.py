@@ -142,8 +142,9 @@ async def process_time(message: types.Message, state: FSMContext):
 # ----------------- СОХРАНЕНИЕ ПРИВЫЧКИ -----------------
 @dp.message_handler(state=Form.motivation, content_types=types.ContentTypes.ANY)
 async def process_motivation(message: types.Message, state: FSMContext):
-    session = Session()
+    session = Session()  # Создаем сессию
     try:
+        # Получаем данные из состояния
         async with state.proxy() as data:
             # Определяем тип и данные мотивации
             if message.content_type == 'text':
@@ -152,18 +153,20 @@ async def process_motivation(message: types.Message, state: FSMContext):
             elif message.voice:
                 motivation_type = 'voice'
                 motivation_data = message.voice.file_id
-            elif message.video_note:  # Исправлено здесь!
+            elif message.video_note:
                 motivation_type = 'video_note'
                 motivation_data = message.video_note.file_id
-            elif message.video:
-                motivation_type = 'video'
-                motivation_data = message.video.file_id
             else:
                 await message.answer("❌ Можно отправить только текст/голос/видео-кружок")
                 return
 
-            # Сохранение привычки
+            # Находим пользователя в базе
             user = session.query(User).filter(User.chat_id == message.chat.id).first()
+            if not user:
+                await message.answer("❌ Пользователь не найден. Начните с /start")
+                return
+
+            # Создаем привычку
             habit = Habit(
                 user_id=user.id,
                 name=data['name'],
@@ -176,15 +179,17 @@ async def process_motivation(message: types.Message, state: FSMContext):
             )
             session.add(habit)
             session.commit()
-            
+
+            # Планируем напоминания
             await schedule_habit(habit, bot)
-            
-        await message.answer(msg.TEXTS['habit_created'], reply_markup=kb.main_menu())
+
+            # Сообщаем об успехе
+            await message.answer(msg.TEXTS['habit_created'], reply_markup=kb.main_menu())
     except Exception as e:
         await message.answer(f"❌ Ошибка: {str(e)}")
     finally:
-        session.close()
-        await state.finish()
+        session.close()  # Закрываем сессию
+        await state.finish()  # Завершаем состояние
 
 # ----------------- ЗАПУСК БОТА -----------------
 if __name__ == '__main__':
