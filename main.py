@@ -32,7 +32,7 @@ class Form(StatesGroup):
 
 # ----------------- ОБРАБОТЧИКИ КОМАНД -----------------
 @dp.message_handler(commands=['start'])
-async def cmd_start(message: types.Message):
+async def cmd_start(message: types.Message, state: FSMContext):
     session = Session()
     try:
         user = session.query(User).filter(User.chat_id == message.chat.id).first()
